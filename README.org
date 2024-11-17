@@ -1,0 +1,30 @@
+#+TITLE: enb: Emacs NoteBooks
+#+STARTUP: content
+This is a work-in-progress attempt at improving support for Jupyter notebooks in Emacs.
+
+** Approach
+ - The notebook's internal JSON representation is rendered in a markdown buffer with code-blocks
+ - each cell can be edited, run, moved, and deleted within this buffer
+ - saving this buffer results in any changes being applied back to the JSON file (or the creation of such a file)
+** Current status
+A simple draft of the rendering/saving logic is complete.
+** Roadmap
+ - *get rendering/saving logic to a stable status*
+ - *cell actions*
+   - toggle cell-type (~markdown~ to ~code~ and the other way) 
+   - move cell up/down
+   - insert cell above/below
+   - delete cell
+   - run code in cell
+
+   This last one is the most important. At least in Python, this should be easy to implement by simply calling [[https://git.savannah.gnu.org/cgit/emacs.git/tree/lisp/progmodes/python.el#n3739][run-python]]. The kernel to use should be configurable but default to a reasonable one within the project. It should be possible to redirect output from the python-interpreter into the notebook buffer.
+ - *full multi-modal capabilities within the rendered buffer*
+
+   Markdown cells should offer (mostly) all the same features available in a pure markdown buffer, and code cells should offer the same features one would get in their programming-language buffer.
+   Using ~tree-sitter~ should help with this.
+   This might be easier to implement in ~org-mode~ (leveraging ~org-babel~), but I'd like to keep the focus on ~markdown~, as it's the standard in Jupyter notebooks. 
+** Lower priority features
+ - *support for ~org-mode~ as another possible 'front-end'*
+ - *display non-text output*
+
+   Simple graphs and plots should be relatively easy, but full-featured support for images (with zoom, etc) would not be possible within a normal Emacs buffer. One approach could be to open a separate [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Xwidgets.html][xwidget-webkit buffer]] for these cases

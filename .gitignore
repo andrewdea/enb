@@ -5,3 +5,6 @@
 *~
 \#*\#
 *.dir-locals.el
+
+# test data
+test-data/
