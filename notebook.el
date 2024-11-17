@@ -20,53 +20,53 @@
 
 ;;; Commentary:
 
-;; TODO
+;; see README.org
 
 ;;; Code:
 
 (require 'json)
 
 ;; TODO implement these functions
-(defun toggle-cell-type (&rest args)
+(defun enb-toggle-cell-type (&rest args)
   "Toggle the type of current cell between markdown and code")
 
-(defun move-cell (&rest args)
+(defun enb-move-cell (&rest args)
   "Move the cell up or down depending on ARGS")
 
-(defun insert-cell (&rest args)
+(defun enb-insert-cell (&rest args)
   "Insert a new cell")
 
-(defun delete-cell (&rest args)
+(defun enb-delete-cell (&rest args)
   "Delete the current cell")
 
-(defvar actions
+(defvar enb-actions
   ;; TODO rather than using emojis, integrate with all-the-icons, and
   ;; provide pure-text alternatives
   (list
-   (buttonize "[md/py]" #'toggle-cell-type)
-   (buttonize "  ⬆️  " #'move-cell 'up)
-   (buttonize "  ⬇️  " #'move-cell 'down)
-   (buttonize " ➕⬆️ " #'insert-cell 'above)
-   (buttonize " ➕⬇️ " #'insert-cell 'below)
-   (buttonize "  🗑️  " #'delete-cell))
+   (buttonize "[md/py]" #'enb-toggle-cell-type)
+   (buttonize "  ⬆️  " #'enb-move-cell 'up)
+   (buttonize "  ⬇️  " #'enb-move-cell 'down)
+   (buttonize " ➕⬆️ " #'enb-insert-cell 'above)
+   (buttonize " ➕⬇️ " #'enb-insert-cell 'below)
+   (buttonize "  🗑️  " #'enb-delete-cell))
   "Actions to display next to a cell")
 
-(defvar formatted-actions
+(defvar enb-formatted-actions
   (propertize
    (concat
     (char-to-string ?\N{U+200F})
-    (string-join actions " ")
+    (string-join enb-actions " ")
     "\n")
    'face 'minibuffer-prompt)
-  "`actions' formatted into the propertized string to insert in the buffer")
+  "`enb-actions' formatted into the propertized string to insert in the buffer")
 
-(defun concat-vector-into-string (vec)
+(defun enb-concat-vector-into-string (vec)
   (cl-loop for line across vec
            ;; do (message "line: %s" line)
            concat line into str
            finally return str))
 
-(defun get-cell-outputs (cell)
+(defun enb-get-cell-outputs (cell)
   (if-let ((outputs (alist-get 'outputs cell))
            ;; TODO find examples with multiple outputs and loop
            ;; through them
@@ -76,10 +76,10 @@
            (text (or (alist-get 'text first)
                      (alist-get 'text-plain (alist-get 'data
                                                        first)))))
-      (concat-vector-into-string text)
+      (enb-concat-vector-into-string text)
     ""))
 
-(defun get-cell-contents (cell)
+(defun enb-get-cell-contents (cell)
   "Construct a string from CELL's source.
 Add delimiters specifying the cell's contents"
   ;; TODO: this delimiters approach integrates well with markdown, but
@@ -91,8 +91,8 @@ Add delimiters specifying the cell's contents"
                                 (alist-get 'cell_type cell))
                         '("# markdown cell\n" "\n")
                       '("# code cell\n```python\n" "\n```\n")))
-        (source (concat-vector-into-string (alist-get 'source cell)))
-        (outputs (get-cell-outputs cell)))
+        (source (enb-concat-vector-into-string (alist-get 'source cell)))
+        (outputs (enb-get-cell-outputs cell)))
     (concat (car delimiters)
             source
             (cadr delimiters)
@@ -103,19 +103,19 @@ Add delimiters specifying the cell's contents"
 
 ;; this function is just for testing for now, not sure it'll be useful
 ;; as a feature
-(defun cleanup-ovs ()
+(defun enb-cleanup-ovs ()
   "Helper function for testing, removes all overlays from the current buffer"
   (interactive)
   (remove-overlays (point-min) (point-max)))
 
-(defun next-delimiter (i overlays)
+(defun enb-next-delimiter (i overlays)
   "Return the start of the next overlay, or `point-max' when there's
 no next overlay"
   (if-let ((ov (nth i overlays)))
       (overlay-start ov)
     (point-max)))
 
-(defun get-all-contents ()
+(defun enb-get-all-contents ()
   "Read the contents of the current buffer and encode them into a JSON object"
   (let* ((all-overlays (overlays-in (point-min) (point-max)))
          (overlays (seq-filter
@@ -128,7 +128,7 @@ no next overlay"
              (let* ((this-ov (nth i overlays))
                     (block (buffer-substring-no-properties
                             (overlay-end this-ov)
-                            (next-delimiter (1+ i) overlays)))
+                            (enb-next-delimiter (1+ i) overlays)))
                     (display (overlay-get this-ov 'display))
                     (props (get-text-property 0
                                               'notebook-properties
@@ -150,7 +150,7 @@ no next overlay"
 (defun ipynb-save ()
   "Save the current buffer into a ipynb file"
   (interactive)
-  (let ((contents (get-all-contents)))
+  (let ((contents (enb-get-all-contents)))
     ;; TODO add check to ensure file hasn't been edited since last
     ;; time
     ;; also maybe we shouldn't go by buffer name but some other
@@ -187,13 +187,13 @@ no next overlay"
                                         nb-contents)
              do
              (save-excursion
-               (insert (get-cell-contents cell)))
+               (insert (enb-get-cell-contents cell)))
              (let ((ov (make-overlay (point)
                                      (search-forward-regexp "# .* cell"))))
                (overlay-put
                 ov 'display
                 (propertize
-                 formatted-actions
+                 enb-formatted-actions
                  'notebook-properties (delq (assoc 'source cell)
                                             cell)))
                (overlay-put ov 'category 'emacs-notebook))
